@@ -1,11 +1,26 @@
 import struct
 
 class Protocol:
+    # constant for message type
+    # request
+    REQ_LOGIN_1 = 1
+    REQ_LOGIN_2 = 2
+
+
+    # response
+    RESP_USER_EXISTING = 101
+    RESP_USER_NOT_EXISTING = 102
+    RESP_LOGIN_SUCCESS = 103
+    RESP_LOGIN_FAILED = 104
+
+
+
     @staticmethod
     def encode_obj(self, obj):
         """
         serialize py objs
         """
+        
         if isinstance(obj, int):
             # define int as type 0x00 + 8-byte signed integer
             return b'\x00' + struct.pack('!q', obj)
