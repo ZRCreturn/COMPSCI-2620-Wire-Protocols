@@ -114,7 +114,7 @@ def client_thread_entry(client_socket, address):
     """
     entry for each thread listening to a client
     """
-    handle_new_connection(client_socket, address)
+    handle_new_connection(address)
 
     try:
         while True:

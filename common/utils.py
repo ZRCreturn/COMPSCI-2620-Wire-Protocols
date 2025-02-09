@@ -1,6 +1,6 @@
 import struct
 import bcrypt
-from protocol import Protocol
+from common.protocol import Protocol
 
 def recv_data(sock):
     # receive 12 bytes header
@@ -22,7 +22,7 @@ def recv_data(sock):
             return None, None 
         payload += chunk
 
-    obj = Protocol.decode_obj(payload)
+    obj, _ = Protocol.decode_obj(payload)
     return msg_type, obj
 
 def send_data(sock, msg_type, data):

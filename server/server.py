@@ -1,6 +1,7 @@
 import socket
 import threading
-from handler import client_thread_entry
+import time
+from server.handler import client_thread_entry
 
 HOST = '127.0.0.1'
 PORT = 5000
