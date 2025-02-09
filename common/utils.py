@@ -2,7 +2,7 @@ import struct
 import bcrypt
 from protocol import Protocol
 
-def recv_message(sock):
+def recv_data(sock):
     # receive 12 bytes header
     header = sock.recv(12)
     if len(header) < 12:
@@ -25,7 +25,7 @@ def recv_message(sock):
     obj = Protocol.decode_obj(payload)
     return msg_type, obj
 
-def send_message(sock, msg_type, data):
+def send_data(sock, msg_type, data):
     if data is None:
         payload = b""
     else:
