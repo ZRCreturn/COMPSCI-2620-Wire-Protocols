@@ -1,7 +1,7 @@
 import struct
 import uuid
 import time
-from message import Chatmsg
+from common.message import Chatmsg
 
 class Protocol:
     # constant for message type
