@@ -135,7 +135,29 @@ class ChatClient:
         if resp_type == Protocol.RESP_LIST_MESSAGES:
             # resp is assumed to be a list of dictionaries representing Chatmsg objects
             return resp
-            
+    
+    def list_users(self):
+        """
+        Retrieve all registerd users.
+        - Protocol.REQ_LIST_USERS
+        - Data: don't need to attach any data.
+        - return: a dict of user and its corresponding unread message counts         """
+        if not self.is_running or not self.username:
+            print("Cannot list users. Either not connected or not logged in.")
+            return
+
+        # Send REQ_LIST_MESSAGES
+        send_data(self.client_socket, Protocol.REQ_LIST_USERS, None)
+
+        # Receive and process the message list
+        resp_type, resp = recv_data(self.client_socket)
+        if resp_type is None:
+            print("No response for REQ_LIST_USERS.")
+            return
+
+        if resp_type == Protocol.RESP_LIST_USERS:
+            return resp
+                            
             
     def start_gui(self):
         """
