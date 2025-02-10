@@ -11,6 +11,11 @@ class Chatmsg:
         self.content = content
         self.status = status  
 
+    def __eq__(self, other):
+        if isinstance(other, Chatmsg):
+            return self.sender == other.sender and self.recipient == other.recipient and self.content == other.content and self.status == other.status  
+        return False
+
     def to_dict(self):
         """Convert the Chatmsg object to a dictionary"""
         return {
