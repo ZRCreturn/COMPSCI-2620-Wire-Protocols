@@ -59,14 +59,6 @@ def test_send_read_list_msg(server):
     send_data(client_socket, Protocol.REQ_LOGIN_2, "password")
     resp_type, resp = recv_data(client_socket)
 
-    # # login as bob
-    # client_socket_bob = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # client_socket_bob.connect((HOST, PORT))
-    # send_data(client_socket_bob, Protocol.REQ_LOGIN_1, "bob")
-    # resp_type, resp = recv_data(client_socket)
-    # send_data(client_socket_bob, Protocol.REQ_LOGIN_2, "passwordbob")
-    # resp_type, resp = recv_data(client_socket)
-
     
     # eric send bob a message -- hey
     data = ["bob", "hey"]
@@ -93,19 +85,41 @@ def test_send_read_list_msg(server):
     except_message2 = Chatmsg(sender="eric", recipient="bob", content= "second hey", status="unread")
     assert message_hey == except_message1
     assert message_second_hey == except_message2
+    # request user list
+    send_data(client_socket, Protocol.REQ_LIST_USERS, None)
+    resp_type, resp = recv_data(client_socket)
+    assert resp == {"eric":0, "test_user" :0}
 
 
-    # # bob read unread-message from eric
-    # send_data(client_socket_bob, Protocol.REQ_READ_MSG, "eric")
-    # # eric request msg list 
-    # send_data(client_socket, Protocol.REQ_LIST_MESSAGES, "bob")
-    # resp_type, resp = recv_data(client_socket)
-    # message_hey = resp[0]
-    # message_second_hey = resp[1]
-    # except_message1 = Chatmsg(sender="eric", recipient="bob", content= "hey", status="read")
-    # except_message2 = Chatmsg(sender="eric", recipient="bob", content= "second hey", status="read")
-    # assert message_hey == except_message1
-    # assert message_second_hey == except_message2
+    # login as bob
+    client_socket_bob = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket_bob.connect((HOST, PORT))
+    send_data(client_socket_bob, Protocol.REQ_LOGIN_1, "bob")
+    resp_type, resp = recv_data(client_socket_bob)
+    send_data(client_socket_bob, Protocol.REQ_LOGIN_2, "passwordbob")
+    resp_type, resp = recv_data(client_socket_bob)
+    # request user list
+    send_data(client_socket, Protocol.REQ_LIST_USERS, None)
+    resp_type, resp = recv_data(client_socket)
+    assert resp == {"eric":0, "test_user" :0, "bob" :0}
+    send_data(client_socket_bob, Protocol.REQ_LIST_USERS, None)
+    resp_type, resp = recv_data(client_socket_bob)
+    assert resp == {"eric":2, "test_user" :0, "bob" :0}
+    # bob read unread-message from eric
+    send_data(client_socket_bob, Protocol.REQ_READ_MSG, "eric")
+    # eric request msg list 
+    send_data(client_socket, Protocol.REQ_LIST_MESSAGES, "bob")
+    resp_type, resp = recv_data(client_socket)
+    message_hey = resp[0]
+    message_second_hey = resp[1]
+    except_message1 = Chatmsg(sender="eric", recipient="bob", content= "hey", status="read")
+    except_message2 = Chatmsg(sender="eric", recipient="bob", content= "second hey", status="read")
+    assert message_hey == except_message1
+    assert message_second_hey == except_message2
+    # now the unread message should be 0
+    send_data(client_socket_bob, Protocol.REQ_LIST_USERS, None)
+    resp_type, resp = recv_data(client_socket_bob)
+    assert resp == {"eric":0, "test_user" :0, "bob" :0}
 
     client_socket.close()
 

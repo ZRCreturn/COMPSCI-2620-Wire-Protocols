@@ -69,6 +69,21 @@ def list_messages(username, friend):
     sorted(ret, key= lambda msg : msg.timestamp)
     return ret
 
+def list_users(username):
+    unread_msg_cnt = {}
+    print("****************")
+    for sender in user_accounts.keys():
+        msg_queue = messages[username][sender]
+        count = 0
+        for msg_id in msg_queue:
+            msg = message_store[msg_id]
+            if msg.status == "unread":
+                count += 1
+        unread_msg_cnt[sender] = count
+    
+    return unread_msg_cnt
+
+
 def handle_request(sock, address, msg_type, parsed_obj):
     match msg_type:
         case Protocol.REQ_LOGIN_1:
@@ -118,6 +133,12 @@ def handle_request(sock, address, msg_type, parsed_obj):
             send_data(sock, Protocol.RESP_LIST_MESSAGES, resp_list)
             return
 
+        case Protocol.REQ_LIST_USERS:
+            username = connected_clients[address]
+            resp_list = list_users(username)
+            send_data(sock, Protocol.RESP_LIST_USERS, resp_list)
+            return
+         
         case _:
             pass
 

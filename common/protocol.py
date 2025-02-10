@@ -9,6 +9,7 @@ class Protocol:
     REQ_SEND_MSG = 3
     REQ_READ_MSG = 4
     REQ_LIST_MESSAGES = 5
+    REQ_LIST_USERS = 6
 
     # response
     RESP_USER_EXISTING = 101
@@ -16,6 +17,7 @@ class Protocol:
     RESP_LOGIN_SUCCESS = 103
     RESP_LOGIN_FAILED = 104
     RESP_LIST_MESSAGES = 105
+    RESP_LIST_USERS = 106
 
     @staticmethod
     def encode_obj(obj):
