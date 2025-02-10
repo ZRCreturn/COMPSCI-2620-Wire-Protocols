@@ -47,6 +47,7 @@ def test_chat_msg(protocol):
     encoded_data = protocol.encode_obj(data)
     assert type(encoded_data) == bytes
     decoded_data, _ = protocol.decode_obj(encoded_data)
+    assert type(decoded_data) == Chatmsg
     assert decoded_data.sender == "eric"
     assert decoded_data.recipient == "bob"
     assert decoded_data.content == "test"
