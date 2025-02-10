@@ -1,6 +1,4 @@
 import struct
-import uuid
-import time
 from common.message import Chatmsg
 
 class Protocol:
@@ -17,6 +15,7 @@ class Protocol:
     RESP_USER_NOT_EXISTING = 102
     RESP_LOGIN_SUCCESS = 103
     RESP_LOGIN_FAILED = 104
+    RESP_LIST_MESSAGES = 105
 
     @staticmethod
     def encode_obj(obj):

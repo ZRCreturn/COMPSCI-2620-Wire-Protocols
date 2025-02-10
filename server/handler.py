@@ -47,6 +47,7 @@ def read_messages(sender, recipient):
 
     if recipient not in messages or sender not in messages[recipient]:
         print(f"🚫 No messages from {sender} to {recipient}.")
+        return
 
     message_ids = list(messages[recipient][sender])
 
@@ -54,9 +55,19 @@ def read_messages(sender, recipient):
         if msg_id in message_store:
             message_store[msg_id].status = "read"
 
-def list_messages(sender, recipient):
-    pass
-
+def list_messages(username, friend):
+    ret = []
+    for msg in message_store.values():
+        # my message to this friend 
+        if msg.sender == username and msg.recipient == friend:
+            ret.append(msg)
+        # this frind's message to me
+        if msg.sender == friend and msg.recipient == username:
+            ret.append(msg)
+    
+    # sort mseeage by time
+    sorted(ret, key= lambda msg : msg.timestamp)
+    return ret
 
 def handle_request(sock, address, msg_type, parsed_obj):
     match msg_type:
@@ -100,9 +111,11 @@ def handle_request(sock, address, msg_type, parsed_obj):
             read_messages(sender=sender, recipient=username)
             return 
         
-        case Protocol.LIST_MESSAGES:
-
-
+        case Protocol.REQ_LIST_MESSAGES:
+            friend = parsed_obj
+            username = connected_clients[address]
+            resp_list = list_messages(username, friend)
+            send_data(sock, Protocol.RESP_LIST_MESSAGES, resp_list)
             return
 
         case _:
