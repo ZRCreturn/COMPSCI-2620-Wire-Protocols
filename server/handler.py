@@ -71,7 +71,6 @@ def list_messages(username, friend):
 
 def list_users(username):
     unread_msg_cnt = {}
-    print("****************")
     for sender in user_accounts.keys():
         msg_queue = messages[username][sender]
         count = 0
@@ -82,6 +81,37 @@ def list_users(username):
         unread_msg_cnt[sender] = count
     
     return unread_msg_cnt
+
+def delete_message(username, msg_id):
+    
+    if msg_id in message_store:
+        recipient = message_store[msg_id].recipient
+        del message_store[msg_id]
+
+        messages[recipient][username].remove(msg_id)
+        print(f"🗑️ Deleted message {msg_id} from {username} to {recipient}")
+
+def delete_account(username):
+    if username in user_accounts:
+        del user_accounts[username]
+    if username in messages:
+        for sender in list(messages[username].keys()):  # iterate message this user received
+            for msg_id in messages[username][sender]: 
+                if msg_id in message_store:
+                    del message_store[msg_id]   
+        del messages[username] 
+
+    for recipient in list(messages.keys()):  # iterate message this user sended
+        if username in messages[recipient]:  # if user is sender
+            for msg_id in messages[recipient][username]: 
+                if msg_id in message_store:
+                    del message_store[msg_id]
+            del messages[recipient][username]  # 删除 user 作为 sender 的消息
+
+            if not messages[recipient]:  # 如果 recipient 的消息都删光了，删除 recipient 记录
+                del messages[recipient]
+
+    print(f"❌ {username} has been deleted.")
 
 
 def handle_request(sock, address, msg_type, parsed_obj):
@@ -138,7 +168,18 @@ def handle_request(sock, address, msg_type, parsed_obj):
             resp_list = list_users(username)
             send_data(sock, Protocol.RESP_LIST_USERS, resp_list)
             return
-         
+        
+        case Protocol.REQ_DELETE_MESSAGE:
+            msg_id = parsed_obj
+            username = connected_clients[address]
+            delete_message(username, msg_id)
+            return
+        
+        case Protocol.REQ_DELETE_ACCOUNT:
+            username = connected_clients[address]
+            delete_account(username)
+            return
+
         case _:
             pass
 

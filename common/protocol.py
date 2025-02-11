@@ -10,6 +10,8 @@ class Protocol:
     REQ_READ_MSG = 4
     REQ_LIST_MESSAGES = 5
     REQ_LIST_USERS = 6
+    REQ_DELETE_MESSAGE = 7
+    REQ_DELETE_ACCOUNT = 8
 
     # response
     RESP_USER_EXISTING = 101
