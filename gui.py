@@ -15,11 +15,15 @@ class ChatClientApp:
         self.username = None
         self.protocol = Protocol()
 
+        self.current_screen = None  # Track the current screen to navigate back
+
         self.login_screen()
 
     def login_screen(self):
         # Clear the screen
         self.clear_screen()
+
+        self.current_screen = None  # Track the current screen to navigate back
 
         # Username entry
         self.username_label = tk.Label(self.root, text="Username:")
@@ -60,6 +64,9 @@ class ChatClientApp:
         # Clear the screen
         self.clear_screen()
 
+        self.current_screen = "password"
+
+
         # Password entry
         self.password_label = tk.Label(self.root, text="Password:")
         self.password_label.pack()
@@ -93,6 +100,9 @@ class ChatClientApp:
         # Clear the screen
         self.clear_screen()
 
+        self.current_screen = "user_list"
+
+
         # Request the list of users
         send_data(self.client_socket, Protocol.REQ_LIST_USERS, None)
         resp_type, resp = recv_data(self.client_socket)
@@ -115,6 +125,9 @@ class ChatClientApp:
     def show_message_list(self, username):
         # Clear the screen
         self.clear_screen()
+
+        self.current_screen = f"chat_{username}"
+
 
         # Request the list of messages for the selected user
         send_data(self.client_socket, Protocol.REQ_LIST_MESSAGES, username)
@@ -154,6 +167,18 @@ class ChatClientApp:
 
         self.delete_button = tk.Button(self.root, text="Delete Account", command=self.delete_account)
         self.delete_button.pack()
+
+        # Add back button
+        self.back_button = tk.Button(self.root, text="Back", command=self.navigate_back)
+        self.back_button.pack()
+
+    def navigate_back(self):
+        if self.current_screen == "user_list":
+            self.show_user_list_screen()
+        elif self.current_screen.startswith("chat_"):
+            # Extract username from the screen name (e.g., "chat_user123" -> "user123")
+            username = self.current_screen.split("_")[1]
+            self.show_user_list_screen()
 
     def send_message(self, recipient):
         message = self.message_entry.get()
