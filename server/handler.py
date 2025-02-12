@@ -1,4 +1,5 @@
 from collections import deque, defaultdict
+import threading
 from common.utils import recv_data, send_data, check_pwd, hash_pwd
 from common.protocol import Protocol
 from common.message import Chatmsg
@@ -13,6 +14,7 @@ user_accounts = {}
 message_store = {}  # {msg_id: Message}
 messages = defaultdict(lambda: defaultdict(deque))  # {sender: {recipient: deque([msg_id1, msg_id2, ...])}}
 
+lock = threading.Lock()
 
 def handle_new_connection(address):
     print(f"[INFO] Client connected from {address}")
@@ -31,29 +33,30 @@ def send_message(sender, recipient, content):
     - online user:directly send messages
     - offline user: store into undelivered_messages
     """
-    msg = Chatmsg(sender, recipient, content)
-    message_store[msg.id] = msg  # global storage for messages
+    with lock:
+        msg = Chatmsg(sender, recipient, content)
+        message_store[msg.id] = msg  # global storage for messages
 
-    messages[recipient][sender].append(msg.id)
-    
-    if recipient in connected_clients.values():  # if recipient is online
-        print(f"✅ Message delivered to {recipient}")
-        msg.status = 'read'
-    else:  # recipient is offline
-        print(f"📩 {recipient} is offline. Message stored for later delivery.")
+        messages[recipient][sender].append(msg.id)
+        
+        if recipient in connected_clients.values():  # if recipient is online
+            print(f"✅ Message delivered to {recipient}")
+            msg.status = 'read'
+        else:  # recipient is offline
+            print(f"📩 {recipient} is offline. Message stored for later delivery.")
 
 
 def read_messages(sender, recipient):
+    with lock:
+        if recipient not in messages or sender not in messages[recipient]:
+            print(f"🚫 No messages from {sender} to {recipient}.")
+            return
 
-    if recipient not in messages or sender not in messages[recipient]:
-        print(f"🚫 No messages from {sender} to {recipient}.")
-        return
+        message_ids = list(messages[recipient][sender])
 
-    message_ids = list(messages[recipient][sender])
-
-    for msg_id in message_ids:
-        if msg_id in message_store:
-            message_store[msg_id].status = "read"
+        for msg_id in message_ids:
+            if msg_id in message_store:
+                message_store[msg_id].status = "read"
 
 def list_messages(username, friend):
     ret = []
@@ -83,35 +86,36 @@ def list_users(username):
     return unread_msg_cnt
 
 def delete_message(username, msg_id):
-    
-    if msg_id in message_store:
-        recipient = message_store[msg_id].recipient
-        del message_store[msg_id]
+    with lock:
+        if msg_id in message_store:
+            recipient = message_store[msg_id].recipient
+            del message_store[msg_id]
 
-        messages[recipient][username].remove(msg_id)
-        print(f"🗑️ Deleted message {msg_id} from {username} to {recipient}")
+            messages[recipient][username].remove(msg_id)
+            print(f"🗑️ Deleted message {msg_id} from {username} to {recipient}")
 
 def delete_account(username):
-    if username in user_accounts:
-        del user_accounts[username]
-    if username in messages:
-        for sender in list(messages[username].keys()):  # iterate message this user received
-            for msg_id in messages[username][sender]: 
-                if msg_id in message_store:
-                    del message_store[msg_id]   
-        del messages[username] 
+    with lock:
+        if username in user_accounts:
+            del user_accounts[username]
+        if username in messages:
+            for sender in list(messages[username].keys()):  # iterate message this user received
+                for msg_id in messages[username][sender]: 
+                    if msg_id in message_store:
+                        del message_store[msg_id]   
+            del messages[username] 
 
-    for recipient in list(messages.keys()):  # iterate message this user sended
-        if username in messages[recipient]:  # if user is sender
-            for msg_id in messages[recipient][username]: 
-                if msg_id in message_store:
-                    del message_store[msg_id]
-            del messages[recipient][username]  # 删除 user 作为 sender 的消息
+        for recipient in list(messages.keys()):  # iterate message this user sended
+            if username in messages[recipient]:  # if user is sender
+                for msg_id in messages[recipient][username]: 
+                    if msg_id in message_store:
+                        del message_store[msg_id]
+                del messages[recipient][username]  # 删除 user 作为 sender 的消息
 
-            if not messages[recipient]:  # 如果 recipient 的消息都删光了，删除 recipient 记录
-                del messages[recipient]
+                if not messages[recipient]:  # 如果 recipient 的消息都删光了，删除 recipient 记录
+                    del messages[recipient]
 
-    print(f"❌ {username} has been deleted.")
+        print(f"❌ {username} has been deleted.")
 
 
 def handle_request(sock, address, msg_type, parsed_obj):
