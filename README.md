@@ -23,8 +23,10 @@ The server accepts incoming TCP connections from clients, handles user authentic
 - **utils.py**  
   Contains helper methods for receiving data from the socket, sending data, hashing passwords, and verifying passwords.
 
-- **gui.py** 
-  codes for the client GUI
+- **gui.py**    
+  Implements the client frontend using Tkinter and socket programming. The GUI allows a user to log in, send and receive messages, view a list of users, and delete messages or their account.
+
+
 
 ## message defination
 This is the design plan from the design phase, and there may be some minor differences from the final implemented version.
@@ -102,6 +104,44 @@ Class ClientHandler:
         Case REQ_DELETE_MESSAGE:
 
         Case REQ_DELETE_ACCOUNT:
+
+```
+
+## frontend design 
+a pseudocode of how the frontend works
+```
+Initialization:
+
+- Set up the Tkinter root window.
+- Define connection parameters (host, port).
+- Initialize the login screen and start the application.
+
+Login Process:
+
+- Username Screen: Display a prompt for the username, and validate it.
+- Password Screen: After submitting the username, prompt for a password and validate it.
+- If login is successful, move to the user list screen.
+- If login fails, display an error message.
+
+User List Screen:
+
+- Fetch a list of users from the server.
+- Display a list of users with unread message counts.
+- Allow the user to select another user to see messages.
+
+Message List Screen:
+
+- Display messages with options to send a new message or delete existing ones.
+- Allow the user to click on a message to delete it.
+
+Account Deletion:
+
+- Provide a button to delete the user's account, which closes the connection.
+
+Helper Methods:
+
+- clear_screen: Removes all widgets from the screen to update UI.
+- send_data & recv_data: Communicate with the server by sending and receiving data.
 
 ```
 
