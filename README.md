@@ -185,6 +185,9 @@ notice: please add -m as prarmeter of running this python script(also use server
    - If the user does not exist, the server expects the user to create a password.
    - If the user does exist, you must supply the correct password.
 
+4. **run tests**
+   - python -m pytest tests
+
 ## Contributing  
 - **Ruichen Zhang**: Backend implementation, protocol design, and test suite development.  
 - **Kiran Pyles**: Frontend (GUI) implementation.
