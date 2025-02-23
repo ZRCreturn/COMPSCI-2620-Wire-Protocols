@@ -110,12 +110,30 @@ def delete_account(username):
                 for msg_id in messages[recipient][username]: 
                     if msg_id in message_store:
                         del message_store[msg_id]
-                del messages[recipient][username]  # 删除 user 作为 sender 的消息
+                del messages[recipient][username]  
 
-                if not messages[recipient]:  # 如果 recipient 的消息都删光了，删除 recipient 记录
+                if not messages[recipient]:  
                     del messages[recipient]
 
         print(f"❌ {username} has been deleted.")
+
+def login_stage1(username):
+    if username in user_accounts:
+        return True
+    else:
+        user_accounts[username] = None
+        return False
+
+def login_stage2(username, pwd):
+    if user_accounts[username] is None:
+        user_accounts[username] = hash_pwd(pwd)
+        return True, list(user_accounts.keys())
+    else:
+        if check_pwd(pwd, user_accounts[username]):
+            return True, list(user_accounts.keys())
+        else:
+            return False, None
+
 
 
 def handle_request(sock, address, msg_type, parsed_obj):
@@ -124,11 +142,10 @@ def handle_request(sock, address, msg_type, parsed_obj):
             username = parsed_obj
             connected_clients[address] = username
             # user exists
-            if username in user_accounts:
+            if login_stage1(username):
                 send_data(sock, Protocol.RESP_USER_EXISTING, None)
             # user not exists, prompt to create account
             else:
-                user_accounts[username] = None
                 send_data(sock, Protocol.RESP_USER_NOT_EXISTING, None)
             return
             
@@ -136,17 +153,24 @@ def handle_request(sock, address, msg_type, parsed_obj):
             pwd = parsed_obj
             username = connected_clients[address]
             # the behavior is creating account 
-            if user_accounts[username] is None:
-                user_accounts[username] = hash_pwd(pwd)
-                # a successful login should response the list of accounts
-                send_data(sock, Protocol.RESP_LOGIN_SUCCESS, list(user_accounts.keys()))
-            # the behavior is validating account
+            # if user_accounts[username] is None:
+            #     user_accounts[username] = hash_pwd(pwd)
+            #     # a successful login should response the list of accounts
+            #     send_data(sock, Protocol.RESP_LOGIN_SUCCESS, list(user_accounts.keys()))
+            # # the behavior is validating account
+            # else:
+            #     if check_pwd(pwd, user_accounts[username]):
+            #         send_data(sock, Protocol.RESP_LOGIN_SUCCESS, list(user_accounts.keys()))
+            #     else:
+            #         send_data(sock, Protocol.RESP_LOGIN_FAILED, None)
+            # return
+            success, user_list = login_stage2(username, pwd)
+            if success:
+                send_data(sock, Protocol.RESP_LOGIN_SUCCESS, user_list)
             else:
-                if check_pwd(pwd, user_accounts[username]):
-                    send_data(sock, Protocol.RESP_LOGIN_SUCCESS, list(user_accounts.keys()))
-                else:
-                    send_data(sock, Protocol.RESP_LOGIN_FAILED, None)
+                send_data(sock, Protocol.RESP_LOGIN_FAILED, None)
             return
+
                 
         case Protocol.REQ_SEND_MSG:
             recipient, content = parsed_obj
