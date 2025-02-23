@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package chat;
+
+// chat message.
+message ChatMessage {
+  string id = 1;
+  double timestamp = 2;    
+  string sender = 3;
+  string recipient = 4;
+  string content = 5;
+  string status = 6;       
+}
+
+// Request message for login stage1.
+message LoginRequest1 {
+  string username = 1;
+}
+
+// Response message for login stage1.
+message LoginResponse1 {
+  bool user_existing  = 1;    
+}
+
+message LoginRequest2 {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse2 {
+  bool success  = 1;
+  repeated string user_list = 2;   
+}
+
+message SendMessageRequest {
+  string sender = 1;     
+  string recipient = 2;
+  string content = 3;
+}
+
+// Response message for sending a chat.
+message SendMessageResponse {
+  bool success = 1; 
+}
+
+// Request message for marking messages from a given sender as read.
+message ReadMessageRequest {
+  string reader = 1;  // The user who is reading the messages
+  string sender = 2;  // Whose messages are being marked as read
+}
+
+// Response message for marking messages as read.
+message ReadMessageResponse {
+  bool success = 1;
+}
+
+// Request message for listing all messages between `user` and `friend`.
+message ListMessagesRequest {
+  string user = 1;   // Current user
+  string friend = 2; // The friend who the user want to see the message
+}
+
+// Response message containing a list of ChatMessage objects.
+message ListMessagesResponse {
+  repeated ChatMessage messages = 1; // All conversation messages
+}
+
+message ListUserRequest {
+  string user = 1;   // Current user
+}
+
+message ListUserResponse {
+  map<string, int32> user_list = 1;
+}
+
+message DeleteMessagesRequest {
+  string user = 1;
+  string message_id = 2;   
+}
+
+message DeleteMessagesResponse {
+  bool success = 1;
+}
+
+message DeleteAccountRequest {
+  string user = 1;   
+}
+
+message DeleteAccountResponse {
+  bool success = 1;
+}
+
+// Define the ChatService gRPC service.
+service ChatService {
+ 
+  rpc LoginStage1(LoginRequest1) returns (LoginResponse1);
+  rpc LoginStage2(LoginRequest2) returns (LoginResponse2);
+
+  // SendMessage RPC: equivalent to REQ_SEND_MSG
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+
+  // ReadMessage RPC: equivalent to REQ_READ_MSG
+  rpc ReadMessage(ReadMessageRequest) returns (ReadMessageResponse);
+
+  // ListMessages RPC: equivalent to REQ_LIST_MESSAGES
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+
+  // ListUsers RPC: equivalent to REQ_LIST_USERS
+  rpc ListUsers(ListUserRequest) returns (ListUserResponse);
+
+  // DeleteMessage RPC: equivalent to REQ_DELETE_MESSAGE
+  rpc DeleteMessage(DeleteMessagesRequest) returns (ListMessagesResponse);
+
+  // DeleteAccount RPC: equivalent to REQ_DELETE_ACCOUNT
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+}
