@@ -220,3 +220,93 @@ This approach ensures that Python treats the script as a module, searching for i
 To ensure thread safety when modifying global variables related to `send`, `read`, and `delete` message operations, I added locks. In Python, thanks to the **context manager**, using locks becomes very **Pythonic**—simply wrapping critical sections with `with lock` ensures proper locking and unlocking.
 
 This approach makes concurrency management much more convenient and readable.
+
+
+
+## February 21: Refactoring the Server Backend with RPC
+
+Today, I researched refactoring the server backend using RPC. Thanks to the well-structured code from previous iterations, the **business logic** was already encapsulated within the `handler` file. Each specific operation was also wrapped within dedicated functions, making the transition to RPC straightforward.
+
+For instance, the existing request handling structure follows this pattern:
+
+```python
+def process_request(sock, address, msg_type, parsed_obj):
+    match msg_type:
+        case REQ_LOGIN_:
+            # Extract relevant parameters
+            xxx, xxx, ... = parsed_obj
+            # Call the corresponding business function
+            login(xxx, xxx, ...)
+
+        case REQ_SEND_MSG:
+        case REQ_READ_MSG:
+        case REQ_LIST_MESSAGES:
+        case REQ_LIST_USERS:
+        case REQ_DELETE_MESSAGE:
+        case REQ_DELETE_ACCOUNT:
+```
+
+This structure makes implementing the corresponding RPC interface on the server simple—**just import the original handler functions**:
+
+```python
+def Login(self, request, context):
+    # Extract relevant parameters
+    xxx = request.xxx
+    # Call the corresponding business function
+    login(xxx, xxx, ...)
+```
+
+This should make the implementation process **smooth and efficient**.
+
+---
+
+## February 22: Implementing the Proto File
+
+Today, I worked on implementing the **proto file**, which turned out to be **straightforward**—it was simply a matter of converting the previously defined protocol details into **message types**.
+
+One notable advantage of using RPC over a custom protocol is **clarity and standardization**. Our custom protocol defined a general serialization method for Python's common data types (`int`, `float`, `str`, `list`, `dict`). However, the actual communication **rules** weren't always explicit in the code. 
+
+For example, in our custom protocol, sending a message required transmitting a **list of length 2**, where:
+1. The first element was the recipient.
+2. The second element was the message content.
+
+This rule had to be **documented separately**, making communication between the frontend and backend **less standardized**.
+
+With **RPC**, we simply define the message in the proto file:
+
+```proto
+message SendMessageRequest {
+  string sender = 1;     
+  string recipient = 2;
+  string content = 3;
+}
+```
+
+This approach is **much more intuitive and structured**, reducing the communication overhead between frontend and backend.
+
+### **Next Steps (TODO):**
+- Complete the remaining implementation based on the outlined approach.
+
+---
+
+## February 23: Completing the Refactor
+
+As expected, the refactor was **straightforward**—the entire business logic transition to RPC was completed in just **one hour**.
+
+## Answer to Key Questions
+
+### **Does the use of this tool make the application easier or more difficult?**
+It makes the application **easier**. As mentioned earlier, it reduces communication overhead between the frontend and backend. Additionally, we no longer need to implement our own serialization and deserialization mechanisms or manually manage TCP socket connections.
+
+### **What does it do to the size of the data passed?**
+The data size **increases** due to the following reasons:
+1. **Protobuf Overhead**: gRPC uses **Protobuf** for serialization, which is more structured and complex than our custom protocol. Our previous approach only added two metadata fields (`type` and `length`) when converting objects to byte streams, making it relatively lightweight.
+2. **HTTP/2 Overhead**: gRPC operates over **HTTP/2**, which introduces additional overhead, including headers, flow control mechanisms (e.g., **streaming, flow control, and header compression**), and other protocol-level features. This makes gRPC slightly heavier compared to a raw **TCP + custom protocol** approach.
+
+### **How does it change the structure of the client? The server?**
+The **client** is handled by my teammate, so further details can be found in his notebook.
+
+For the **server**, this was discussed in detail in the previous engineering notebook entries. In short, gRPC **modularizes** the server structure, making it easier to handle various request types using well-defined APIs.
+
+### **How does this change the testing of the application?**
+Testing is **significantly simplified**. Previously, without an API interface, we had to **simulate frontend requests within the code**, manually parse server responses, and verify if they met expectations. With **gRPC**, we can now directly test the API endpoints, making the tests **more independent and standardized**.
